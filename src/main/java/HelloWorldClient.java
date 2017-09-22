@@ -70,7 +70,7 @@ public class HelloWorldClient {
      * greeting.
      */
     public static void main(String[] args) throws Exception {
-        HelloWorldClient client = new HelloWorldClient("localhost", 50051);
+        HelloWorldClient client = new HelloWorldClient("192.168.144.101", 50051);
         try {
             client.greet("world");
             if (args.length > 0)
