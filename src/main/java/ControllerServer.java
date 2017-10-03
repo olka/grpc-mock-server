@@ -1,30 +1,18 @@
-/*
- * Copyright 2015, gRPC Authors All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import generated.DummyRequest;
+import generated.ExpectedResultsRequest;
+import generated.ExpectedResultsResponse;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Server that manages startup/shutdown of a {@code Greeter} server.
- */
-public class HelloWorldServer {
-    private static final Logger logger = Logger.getLogger(HelloWorldServer.class.getName());
+public class ControllerServer {
+    private static final Logger logger = Logger.getLogger(ControllerServer.class.getName());
+    private static List<String> expectedResults = new ArrayList<>();
 
     private Server server;
 
@@ -32,7 +20,7 @@ public class HelloWorldServer {
     /* The port on which the server should run */
         int port = 50051;
         server = ServerBuilder.forPort(port)
-                .addService(new GreeterImpl())
+                .addService(new SpeechMockControllerImpl())
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -41,7 +29,7 @@ public class HelloWorldServer {
             public void run() {
                 // Use stderr here since the logger may have been reset by its JVM shutdown hook.
                 System.err.println("*** shutting down gRPC server since JVM is shutting down");
-                HelloWorldServer.this.stop();
+                ControllerServer.this.stop();
                 System.err.println("*** server shut down");
             }
         });
@@ -66,16 +54,30 @@ public class HelloWorldServer {
      * Main launches the server from the command line.
      */
     public static void main(String[] args) throws IOException, InterruptedException {
-        final HelloWorldServer server = new HelloWorldServer();
+        final ControllerServer server = new ControllerServer();
         server.start();
         server.blockUntilShutdown();
     }
 
-    static class GreeterImpl extends GreeterGrpc.GreeterImplBase {
+    static class SpeechMockControllerImpl extends SpeechMockControllerGrpc.SpeechMockControllerImplBase {
+
 
         @Override
-        public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
-            HelloReply reply = HelloReply.newBuilder().setMessage("Hello " + req.getName()).build();
+        public void putExpectedResults(ExpectedResultsRequest req, StreamObserver<ExpectedResultsResponse> responseObserver) {
+            StringBuffer replyBuffer = new StringBuffer();
+            for(String r : req.getExpectedResultList()){
+                System.out.println(r);
+                replyBuffer.append(r);
+            }
+            expectedResults.addAll(req.getExpectedResultList());
+            ExpectedResultsResponse reply = ExpectedResultsResponse.newBuilder().setMessage("Expected results " + expectedResults).build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void getExpectedResults(DummyRequest req, StreamObserver<ExpectedResultsResponse> responseObserver) {
+            ExpectedResultsResponse reply = ExpectedResultsResponse.newBuilder().setMessage("Expected results " + expectedResults).build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
         }

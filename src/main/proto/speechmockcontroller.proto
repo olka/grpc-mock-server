@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_outer_classname = "SpeechMockProto";
+option objc_class_prefix = "SMC";
+
+service SpeechMockController {
+    rpc PutExpectedResults (ExpectedResultsRequest) returns (ExpectedResultsResponse) {}
+    rpc GetExpectedResults (DummyRequest) returns (ExpectedResultsResponse) {}
+}
+
+message DummyRequest {
+    string expectedResult = 1;
+}
+
+message ExpectedResultsRequest {
+    repeated string expectedResult = 1;
+}
+
+message ExpectedResultsResponse {
+    string message = 1;
+}
